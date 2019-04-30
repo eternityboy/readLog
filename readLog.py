@@ -1,3 +1,8 @@
+## Version 1.5
+## support for both OF branches
+## To-Do
+## suggestions? QT? FFT analyze?
+
 ## Version 1.4
 ## reference point changed to reference range
 ## To-Do
