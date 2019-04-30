@@ -3,15 +3,16 @@
 
 ## Version 1.5
 * support for both OF branches
-* copmmand line execution, example:
+* command line execution, example:
 ```bash
 $ python3 readLog.py openfoam.log 1 20 50
+```
 ```
 > 1 goes for Forces
 > 2 goes for Moments
 > 20 start point for reference range
 > 50 end point for reference range
-'''
+```
 ## To-Do
 suggestions? QT? FFT analyze?
 
