@@ -1,3 +1,13 @@
+## Version 1.4
+## reference point changed to reference range
+## To-Do
+## support for both OF versions
+
+## Version 1.3
+## OpenFOAM-v1806 support
+## To-Do
+## 
+
 ## Version 1.2
 ## added roll motion analize
 ## To-Do
@@ -14,22 +24,29 @@
 import sys
 import numpy as np
 import math
+import re
 import matplotlib.pyplot as plt
 import time
-from scipy import signal
-from scipy.fftpack import fft
+#from scipy import signal
+#from scipy.fftpack import fft
 from functions import *
 
-fileName = sys.argv[1].strip().split('.')
-inputName = fileName[0]+'.'+fileName[1]
+fileName = sys.argv[1]#.strip().split('/')
+inputName = sys.argv[1]
+
+#print(sys.argv[1])
+#fileName = sys.argv[1].strip().split('.').split('/')
+#print(fileName)
+#
+#inputName = fileName[-2]+'.'+fileName[-1]
 
 
 try:
-    ref_point
+    ref_point_s
 except NameError:
     rp = 10
 else:
-    rp = ref_point
+    rp = ref_point_s
 
 def load_log():
     start_time = time.time()
@@ -40,6 +57,7 @@ def load_log():
     f = open(inputName, 'r').readlines()
     results = [[0 for x in range(n_i)] for y in range(COL)]
     print("--- Reading log file ---")
+    print(sys.argv[1])
     i = 0
     loop = -1
     for i in range(f_l):
@@ -68,35 +86,63 @@ def load_log():
         if f[i].lstrip().startswith('ExecutionTime ='):
             Et = f[i].strip().split(' ')
             results[11][loop] = Et[2]
-        if f[i].lstrip().startswith('pressure :') and f[i-1].lstrip().startswith('sum of forces:'):
-            Fp = f[i].strip().split(' ')
-            results[12][loop] = Fp[2].replace('(', '')
-            results[13][loop] = Fp[3]
-            results[14][loop] = Fp[4].replace(')', '')
-        if f[i].lstrip().startswith('viscous  :') and f[i-2].lstrip().startswith('sum of forces:'):
-            Fv = f[i].strip().split(' ')
-            results[15][loop] = Fv[3].replace('(', '')
-            results[16][loop] = Fv[4]
-            results[17][loop] = Fv[5].replace(')', '')
-        if f[i].lstrip().startswith('pressure :') and f[i-1].lstrip().startswith('sum of moments:'):
-            Mp = f[i].strip().split(' ')
-            results[18][loop] = Mp[2].replace('(', '')
-            results[19][loop] = Mp[3]
-            results[20][loop] = Mp[4].replace(')', '')
-        if f[i].lstrip().startswith('viscous  :') and f[i-2].lstrip().startswith('sum of moments:'):
-            Mv = f[i].strip().split(' ')
-            results[21][loop] = Mv[3].replace('(', '')
-            results[22][loop] = Mv[4]
-            results[23][loop] = Mv[5].replace(')', '')
+        if f[i].lower().lstrip().startswith('sum of forces'):
+            if f[i+1].lower().lstrip().startswith('pressure'):
+                Fp = re.sub(" +", " ", f[i+1]).strip()
+                Fp = re.sub("[()]","",Fp).split(" ")
+                results[12][loop] = Fp[2]
+                results[13][loop] = Fp[3]
+                results[14][loop] = Fp[4]
+            if f[i+2].lower().lstrip().startswith('pressure'):
+                Fp = re.sub(" +", " ", f[i+2]).strip()
+                Fp = re.sub("[()]","",Fp).split(" ")
+                results[12][loop] = Fp[2]
+                results[13][loop] = Fp[3]
+                results[14][loop] = Fp[4]
+            if f[i+2].lower().lstrip().startswith('viscous'):
+                Fv = re.sub(" +", " ", f[i+2]).strip()
+                Fv = re.sub("[()]","",Fv).split(" ")
+                results[15][loop] = Fv[2]
+                results[16][loop] = Fv[3]
+                results[17][loop] = Fv[4]
+            if f[i+3].lower().lstrip().startswith('viscous'):
+                Fv = re.sub(" +", " ", f[i+3]).strip()
+                Fv = re.sub("[()]","",Fv).split(" ")
+                results[15][loop] = Fv[2]
+                results[16][loop] = Fv[3]
+                results[17][loop] = Fv[4]
+        if f[i].lower().lstrip().startswith('sum of moments'):
+            if f[i+1].lower().lstrip().startswith('pressure'):
+                Mp = re.sub(" +", " ", f[i+1]).strip()
+                Mp = re.sub("[()]","",Mp).split(" ")
+                results[18][loop] = Mp[2]
+                results[19][loop] = Mp[3]
+                results[20][loop] = Mp[4]
+            if f[i+2].lower().lstrip().startswith('pressure'):
+                Mp = re.sub(" +", " ", f[i+2]).strip()
+                Mp = re.sub("[()]","",Mp).split(" ")
+                results[18][loop] = Mp[2]
+                results[19][loop] = Mp[3]
+                results[20][loop] = Mp[4]
+            if f[i+2].lower().lstrip().startswith('viscous'):
+                Mv = re.sub(" +", " ", f[i+2]).strip()
+                Mv = re.sub("[()]","",Mv).split(" ")
+                results[21][loop] = Mv[2]
+                results[22][loop] = Mv[3]
+                results[23][loop] = Mv[4]
+            if f[i+3].lower().lstrip().startswith('viscous'):
+                Mv = re.sub(" +", " ", f[i+3]).strip()
+                Mv = re.sub("[()]","",Mv).split(" ")
+                results[21][loop] = Mv[2]
+                results[22][loop] = Mv[3]
+                results[23][loop] = Mv[4]
         if f[i].lstrip().startswith('Phase-1 volume fraction =') and f[i-1].lstrip().startswith('smoothSolver:'):
             vFr = f[i].strip().split(' ')
             results[24][loop] = vFr[4]
     print("--- Reading log file complete: %s seconds ---" % (time.time() - start_time))
-
     print("--- Creating NumPy array ---")
     results = np.array(results, dtype=np.float32) #.transpose()
     print("--- Creating NumPy array complete: %s seconds ---" % (time.time() - start_time))
-
     print("--- Creating global variables ---")
     global r_t,ETfMU,ET
     global CoM_x,CoM_y,CoM_z
@@ -106,6 +152,7 @@ def load_log():
     global Mp_x,Mp_y,Mp_z,Mv_x,Mv_y,Mv_z
     global VF
     global F_x,F_y,F_z,M_x,M_y,M_z
+    global rp
     r_t = results[0]
     CoM_x = results[1]
     CoM_y = results[2]
@@ -137,9 +184,11 @@ def load_log():
     M_x = Mp_x + Mv_x
     M_y = Mp_y + Mv_y
     M_z = Mp_z + Mv_z
+    rp = [10,n_i-1]
     print("--- Creating global variables complete: %s seconds ---" % (time.time() - start_time))
     print("--- Reading motion values ---")
     if all(v1==0 for v1 in CoM_x) and all(v2==0 for v2 in CoM_z) :
+        print("")
         print("No motions in the log file!")
     else:
         global sixDoF
@@ -162,19 +211,19 @@ def load_log():
 
 #############################################################################
 def time_consumption():
-    N = len(r_t)-2
+    N = len(rp)-2
     print("Total calculation time: %.2f m or %.1f h" % (ET[N]/60,ET[N]/3600))
     print("Calculation ration Execution Time / Real Time: %f" % (ET[N]/r_t[N]))
     print("Total time to update mesh: %f m and it is %.2f %% of total time" % (np.sum(ETfMU)/60,(ET[N]-np.sum(ETfMU))/ET[N]))
 
     sT = 1.0/3600.0
-    plotgraph(r_t,ETfMU,0,0,'Execution time for mesh update','Time, s','Execution time for mesh update, s')
-    plotgraph(r_t,ET*sT,0,0,'Execution time, hours','Time, s','Execution Time, hours')
-    plotgraph(r_t,VF,0,0,'Phase-1 volume fraction','Time, s','Volume fraction')
+    plotgraph(r_t,ETfMU,0,0,'Execution time for mesh update','Time, s','Execution time for mesh update, s',rp)
+    plotgraph(r_t,ET*sT,0,0,'Execution time, hours','Time, s','Execution Time, hours',rp)
+    plotgraph(r_t,VF,0,0,'Phase-1 volume fraction','Time, s','Volume fraction',rp)
 
 #############################################################################
 def reference_point():
-    global ref_point
+    global ref_point_s,ref_point_e
          
     plt
     plt.xlabel('Time, s')
@@ -190,15 +239,19 @@ def reference_point():
     plt.plot(r_t[50:-1],F_z[50:-1],'g-')  
     plt.show()
     
-    ref_point = raw_input("Enter reference point for time to start calculating Mean values:\n") or 0.1
-    ref_point = float(ref_point)
-    ref_point = find_nearest(r_t,ref_point)
+    ref_point_s = float(input("Enter reference point for time to START calculating Mean values:\n") or r_t[10])
+    print ("Start time: %s" % ref_point_s)
+    ref_point_s = find_nearest(r_t,ref_point_s)
+    
+    ref_point_e = float(input("Enter reference point for time to END calculating Mean values:\n") or r_t[-10])
+    print ("End time: %s" % ref_point_e)
+    ref_point_e = find_nearest(r_t,ref_point_e)  
     
 ############################################################################
 def reference_pointOld():
     global ref_point
     while True:
-        cs = raw_input("Choose plane to set reference point (x default, y or z:\n").lower() or 'x'
+        cs = input("Choose plane to set reference point (x default, y or z:\n").lower() or 'x'
         if cs == 'x':
            m_plane = F_x
            break
@@ -214,14 +267,15 @@ def reference_pointOld():
     
     plotgraph(r_t,m_plane,0,0,'F_{'+cs+'}','Time, s','Total Force, N')
     
-    ref_point = raw_input("Enter reference point for time to start calculating Mean values:\n") or 0.1
+    ref_point = input("Enter reference point for time to start calculating Mean values:\n") or 0.1
     ref_point = float(ref_point)
     ref_point = find_nearest(r_t,ref_point)
 
 #############################################################################
 
 #############################################################################
-def forces():
+def forces(a):
+    print('FORCES')
     m_F_x = calc_mean(r_t,F_x,rp)
     m_F_y = calc_mean(r_t,F_y,rp)
     m_F_z = calc_mean(r_t,F_z,rp)
@@ -233,23 +287,25 @@ def forces():
     m_Fv_x = calc_mean(r_t,Fv_x,rp)
     m_Fv_y = calc_mean(r_t,Fv_y,rp)
     m_Fv_z = calc_mean(r_t,Fv_z,rp)
-    
-    print("X: Mean total force: %s, Pressure force: %s, Viscous force: %s" % (m_F_x, m_Fp_x, m_Fv_x))
-    print("Y: Mean total force: %s, Pressure force: %s, Viscous force: %s" % (m_F_y, m_Fp_y, m_Fv_y))
-    print("Z: Mean total force: %s, Pressure force: %s, Viscous force: %s" % (m_F_z, m_Fp_z, m_Fv_z))
-    print('############')
-    print('Export view:')
-    print("%s %s %s" % (m_F_x, m_Fp_x, m_Fv_x))
-    print("%s %s %s" % (m_F_y, m_Fp_y, m_Fv_y))
-    print("%s %s %s" % (m_F_z, m_Fp_z, m_Fv_z))
 
+    if a != 0:
+        print("X: Mean total force: %s, Pressure force: %s, Viscous force: %s" % (m_F_x, m_Fp_x, m_Fv_x))
+        print("Y: Mean total force: %s, Pressure force: %s, Viscous force: %s" % (m_F_y, m_Fp_y, m_Fv_y))
+        print("Z: Mean total force: %s, Pressure force: %s, Viscous force: %s" % (m_F_z, m_Fp_z, m_Fv_z))
+        print('############')
+        print('Export view:')
+        print("%s %s %s %s %s %s %s %s %s" % (m_F_x, m_F_y, m_F_z, m_Fp_x, m_Fp_y, m_Fp_z, m_Fv_x, m_Fv_y, m_Fv_z))
+    else:
+        print("%s %s %s %s %s %s %s %s %s" % (m_F_x, m_F_y, m_F_z, m_Fp_x, m_Fp_y, m_Fp_z, m_Fv_x, m_Fv_y, m_Fv_z))
     
-    plotgraph(r_t,F_x,m_F_x,0,'F_{x}','Time, s','Total Force, N')
-    plotgraph(r_t,F_y,m_F_y,0,'F_{y}','Time, s','Total Force, N')
-    plotgraph(r_t,F_z,m_F_z,0,'F_{z}','Time, s','Total Force, N')
+    if a != 0:
+        plotgraph(r_t,F_x,m_F_x,0,'F_{x}','Time, s','Total Force, N',rp)
+        plotgraph(r_t,F_y,m_F_y,0,'F_{y}','Time, s','Total Force, N',rp)
+        plotgraph(r_t,F_z,m_F_z,0,'F_{z}','Time, s','Total Force, N',rp)
 
 #############################################################################
-def moments():
+def moments(a):
+    print('MOMENTS')
     m_M_x = calc_mean(r_t,M_x,rp)
     m_M_y = calc_mean(r_t,M_y,rp)
     m_M_z = calc_mean(r_t,M_z,rp)
@@ -262,18 +318,20 @@ def moments():
     m_Mv_y = calc_mean(r_t,Mv_y,rp)
     m_Mv_z = calc_mean(r_t,Mv_z,rp)
     
-    print("X: Mean total moment: %s, Pressure moment: %s, Viscous moment: %s" % (m_M_x, m_Mp_x, m_Mv_x))
-    print("Y: Mean total moment: %s, Pressure moment: %s, Viscous moment: %s" % (m_M_y, m_Mp_y, m_Mv_y))
-    print("Z: Mean total moment: %s, Pressure moment: %s, Viscous moment: %s" % (m_M_z, m_Mp_z, m_Mv_z))
-    print('############')
-    print('Export view:')
-    print("%s %s %s" % (m_M_x, m_Mp_x, m_Mv_x))
-    print("%s %s %s" % (m_M_y, m_Mp_y, m_Mv_y))
-    print("%s %s %s" % (m_M_z, m_Mp_z, m_Mv_z))
+    if a != 0:
+        print("X: Mean total moment: %s, Pressure moment: %s, Viscous moment: %s" % (m_M_x, m_Mp_x, m_Mv_x))
+        print("Y: Mean total moment: %s, Pressure moment: %s, Viscous moment: %s" % (m_M_y, m_Mp_y, m_Mv_y))
+        print("Z: Mean total moment: %s, Pressure moment: %s, Viscous moment: %s" % (m_M_z, m_Mp_z, m_Mv_z))
+        print('############')
+        print('Export view:')
+        print("%s %s %s %s %s %s %s %s %s" % (m_M_x, m_M_y, m_M_z, m_Mp_x, m_Mp_y, m_Mp_z, m_Mv_x, m_Mv_y, m_Mv_z))
+    else:
+        print("%s %s %s %s %s %s %s %s %s" % (m_M_x, m_M_y, m_M_z, m_Mp_x, m_Mp_y, m_Mp_z, m_Mv_x, m_Mv_y, m_Mv_z))
     
-    plotgraph(r_t,M_x,m_M_x,0,'M_{x}','Time, s','Total Moment, N*m')
-    plotgraph(r_t,M_y,m_M_y,0,'M_{y}','Time, s','Total Moment, N*m')
-    plotgraph(r_t,M_z,m_M_z,0,'M_{z}','Time, s','Total Moment, N*m')
+    if a != 0:
+        plotgraph(r_t,M_x,m_M_x,0,'M_{x}','Time, s','Total Moment, N*m',rp)
+        plotgraph(r_t,M_y,m_M_y,0,'M_{y}','Time, s','Total Moment, N*m',rp)
+        plotgraph(r_t,M_z,m_M_z,0,'M_{z}','Time, s','Total Moment, N*m',rp)
 
 #############################################################################
 def phases():
@@ -285,30 +343,30 @@ def phases():
     
 
 #############################################################################
-def motions():
-        #N = np.size(sixDoF[0])
-        #mean_period = sixDoF[0][-1]/N
-        #FFT = fft_welch(r_t[rp:-1],sixDoF[2][rp:-1])
-        #plotgraph(FFT[0],FFT[1],0,0,'FFT','Frequency','m**2/s')
+def motions(a):
+    #N = np.size(sixDoF[0])
+    #mean_period = sixDoF[0][-1]/N
+    #FFT = fft_welch(r_t[rp:-1],sixDoF[2][rp:-1])
+    #plotgraph(FFT[0],FFT[1],0,0,'FFT','Frequency','m**2/s')
 
-        mean_heave = calc_mean_ampl(sixDoF[0],sixDoF[2],rp)
-        mean_pitch = calc_mean_ampl(sixDoF[0],sixDoF[3],rp)
-        mean_roll = calc_mean_ampl(sixDoF[0],sixDoF[4],rp)
+    mean_heave = calc_mean_ampl(sixDoF[0],sixDoF[2],rp)
+    mean_pitch = calc_mean_ampl(sixDoF[0],sixDoF[3],rp)
+    mean_roll = calc_mean_ampl(sixDoF[0],sixDoF[4],rp)
 
-        print("HEAVE mean value: %s, local maximum: %s, local minimum: %s" % (mean_heave[0],mean_heave[1],mean_heave[2]))
-        print("PITCH mean value: %s, local maximum: %s, local minimum: %s" % (mean_pitch[0],mean_pitch[1],mean_pitch[2]))
-        print("ROLL mean value: %s, local maximum: %s, local minimum: %s" % (mean_roll[0],mean_roll[1],mean_roll[2]))
-
-        plotgraph(sixDoF[0],sixDoF[2]-mean_heave[3],mean_heave[0],1,'Heave','Time, s','Z_{g}, m')
-        plotgraph(sixDoF[0],sixDoF[3]-mean_pitch[3],mean_pitch[0],1,'Pitch','Time, s','Degree')
-        plotgraph(sixDoF[0],sixDoF[4]-mean_roll[3],mean_roll[0],1,'Roll','Time, s','Degree')
+    print("HEAVE mean value: %s, local maximum: %s, local minimum: %s" % (mean_heave[0],mean_heave[1],mean_heave[2]))
+    print("PITCH mean value: %s, local maximum: %s, local minimum: %s" % (mean_pitch[0],mean_pitch[1],mean_pitch[2]))
+    print("ROLL mean value: %s, local maximum: %s, local minimum: %s" % (mean_roll[0],mean_roll[1],mean_roll[2]))
+    if a != 0:
+        plotgraph(sixDoF[0],sixDoF[2]-mean_heave[3],mean_heave[0],1,'Heave','Time, s','Z_{g}, m',rp)
+        plotgraph(sixDoF[0],sixDoF[3]-mean_pitch[3],mean_pitch[0],1,'Pitch','Time, s','Degree',rp)
+        plotgraph(sixDoF[0],sixDoF[4]-mean_roll[3],mean_roll[0],1,'Roll','Time, s','Degree',rp)
 
 #############################################################################
 def wave_forces():
     print("--- This is Beta program! Ship values based on the Wigley III Delft experiments ---")
 
     while True:
-        lL = raw_input("Please set wave length ratio lambda/L = ") or '1'
+        lL = input("Please set wave length ratio lambda/L = ") or '1'
         if is_number(lL) == True:
            lL = float(lL)
            break
@@ -353,15 +411,27 @@ def wave_forces():
 #############################################################################
 def menu():
 
-    ##global ref_point
-    ##ref_point = find_nearest(r_t,float(sys.argv[2]))
-
-    if 'ref_point' in globals():
+    global ref_point_s, ref_point_e
+    
+    if len(sys.argv) > 2:
+        ref_point_s = find_nearest(r_t,float(sys.argv[3]))
+        ref_point_e = find_nearest(r_t,float(sys.argv[4]))
+        if int(sys.argv[2]) == 1:
+            forces(0)
+        elif int(sys.argv[2]) == 2:
+            moments(0)
+        else:
+            print("Valid args:\n1 - goes for extract forces only,\n2 - goes for extract moments only,\n next arg min reference point,\n and after max reference point. or just nothing and have fun.")
+        exit()
+    
+    print ("\n### ReadLog v1.5 for OpenFOAM v1806 ###")
+    if 'ref_point_s' in globals():
         global rp
-        rp = ref_point
-        print ("\n### Reference point is set to %s ###" % (r_t[rp]))
+        rp = [ref_point_s,ref_point_e]
+        print ("\n### Reference range is set to %s - %s ###" % (r_t[rp[0]],r_t[rp[1]]))
         ####print("Nearest point is %s and it is N %s in the list" % (r_t[ref_point], ref_point))
 
+    
     strs = ('\n1. Time\n'
             '2. Set reference point\n'
             '3. Forces\n'
@@ -372,7 +442,7 @@ def menu():
             '8. Exit\n'
             '0. Update\n'
             '--- Your choice : ')
-    choice = raw_input(strs)
+    choice = input(strs) or "9"
     return int(choice) 
 
 
@@ -385,9 +455,9 @@ while True:
     elif choice == 2:
         reference_point()
     elif choice == 3:
-        forces()
+        forces(1)
     elif choice == 4:
-        moments()
+        moments(1)
     elif choice == 5:
         wave_forces()
     elif choice == 6:
@@ -398,7 +468,9 @@ while True:
         load_log()
     elif choice == 8:
         break
-
+    else:
+        menu()
+        
 ###f1 = interpolate.interp1d(sixDoF[0],sixDoF[2])
 ###new_time = np.arange(0,N*mean_period,mean_period)
 ###print len(new_time)

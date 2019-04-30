@@ -59,18 +59,18 @@ def query_yes_no(question, default="yes"):
             sys.stdout.write("Please respond with 'yes' or 'no' "\
                              "(or 'y' or 'n').\n")
 
-def plotgraph(x,y,y2,pp,title,xlabel,ylabel):
+def plotgraph(x,y,y2,pp,title,xlabel,ylabel,rp):
     if all(v==0 for v in y):
         print('There is nothing in "%s"' % title)
     else:
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        plt.plot(x[50:-1],y[50:-1])
-        if y2 <> 0:
-            a = np.empty(np.size(x[50:-1]))
+        plt.plot(x[rp[0]:rp[1]],y[rp[0]:rp[1]])
+        if y2 != 0: ### <>
+            a = np.empty(np.size(x[rp[0]:rp[1]]))
             a.fill(y2)
-            plt.plot(x[50:-1],a)
+            plt.plot(x[rp[0]:rp[1]],a)
         if pp == 1:
             peakFind = signal.find_peaks_cwt(y,np.arange(0.01,1))
             plt.plot(x[peakFind],y[peakFind],'ro')
@@ -108,8 +108,8 @@ def num_iter(inputFile,f_l):
     return k
 
 def calc_mean(x,y,rp):
-    x = x[rp:]
-    y = y[rp:]
+    x = x[rp[0]:rp[1]]
+    y = y[rp[0]:rp[1]]
     i = a0 = 0
     N = len(y)-1
     for i in range(N):
@@ -122,10 +122,10 @@ def calc_mean(x,y,rp):
 
 def calc_mean_ampl(x,y,rp):
     y_mean = calc_mean(x,y,rp)
-    y = y[rp:]-y_mean
+    y = y[rp[0]:rp[1]]-y_mean
     y_sq = y**3
     y_peaks = signal.find_peaks_cwt(y_sq,np.arange(0.1,1))
-    print y_peaks
+    print (y_peaks)
     if len(y_peaks) > 0:
         mean = np.mean(np.abs(y[y_peaks]))
         min = np.min(np.abs(y[y_peaks]))
