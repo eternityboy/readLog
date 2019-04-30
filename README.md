@@ -5,7 +5,7 @@ readLog of OpenFOAM based on python3
 # Version 1.5
 * support for both OF branches
 * copmmand line execution, example
->> python3 readLog.py openfoam.log 1 20 50
+> python3 readLog.py openfoam.log 1 20 50
 1 goes for Forces
 2 goes for Moments
 20 start point for reference range
