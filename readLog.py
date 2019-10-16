@@ -1,3 +1,9 @@
+version = "1.5.1"
+
+## Version 1.5.1
+## Bug Fixes
+## To-Do
+
 ## Version 1.5
 ## support for both OF branches
 ## To-Do
@@ -417,10 +423,12 @@ def wave_forces():
 def menu():
 
     global ref_point_s, ref_point_e
+    global rp
     
     if len(sys.argv) > 2:
         ref_point_s = find_nearest(r_t,float(sys.argv[3]))
         ref_point_e = find_nearest(r_t,float(sys.argv[4]))
+        rp = [ref_point_s,ref_point_e]
         if int(sys.argv[2]) == 1:
             forces(0)
         elif int(sys.argv[2]) == 2:
@@ -429,9 +437,8 @@ def menu():
             print("Valid args:\n1 - goes for extract forces only,\n2 - goes for extract moments only,\n next arg min reference point,\n and after max reference point. or just nothing and have fun.")
         exit()
     
-    print ("\n### ReadLog v1.5 for OpenFOAM v1806 ###")
+    print ("\n### ReadLog v%s for OpenFOAM v1806 ###" % version)
     if 'ref_point_s' in globals():
-        global rp
         rp = [ref_point_s,ref_point_e]
         print ("\n### Reference range is set to %s - %s ###" % (r_t[rp[0]],r_t[rp[1]]))
         ####print("Nearest point is %s and it is N %s in the list" % (r_t[ref_point], ref_point))
@@ -449,7 +456,6 @@ def menu():
             '--- Your choice : ')
     choice = input(strs) or "9"
     return int(choice) 
-
 
 load_log()
 
@@ -476,42 +482,3 @@ while True:
     else:
         menu()
         
-###f1 = interpolate.interp1d(sixDoF[0],sixDoF[2])
-###new_time = np.arange(0,N*mean_period,mean_period)
-###print len(new_time)
-###new_heave = f1(new_time)
-#if query_yes_no("Do you want to calculate mean values of force?") == "no":
-#    sys.exit("Good Bye!") 
-#FFT = fft_welch(r_t[ref_point:-1],F_x[ref_point:-1])
-#plotgraph(FFT[0],FFT[1],0,0,'FFT','Frequency','m**2/s')
-#########################################################################################################
-##FFT = fft(sixDoF[1])
-##N=n_i #2*15429)
-##xT = np.linspace(0.0,1.0/(2.0*dt),N/2)
-###plotgraph(xT,2.0/N*np.abs(FFT[:N/2]),0,0,'FFT','FFt','FFT')
-
-##m_heave = calc_mean(sixDoF[0],sixDoF[3],ref_point)
-##heave = (sixDoF[3][ref_point:-1]-m_heave)
-##heave_power = heave**2
-###plotgraph(sixDoF[0][ref_point:-1],heave_power,0,0,'Heave','Time, s','Z_{g}, m')
-##heave_peaks = signal.find_peaks_cwt(heave_power,np.arange(0.1,1))
-##print heave_peaks
-##print heave[heave_peaks]
-##heave_amp = np.mean(np.abs(heave[heave_peaks]))
-##print heave_amp
-
-#m_heave = calc_mean(sixDoF[0],sixDoF[1],ref_point)
-#sixDoF[1]-m_heave
-#plotgraph(sixDoF[0],sixDoF[1],m_heave,'Heave','Time, s','Z_{g}, m')
-####m_heave = calc_mean(sixDoF[0],sixDoF[2],ref_point)
-####p_heave = signal.find_peaks_cwt(sixDoF[2][ref_point:-1],np.arange(0.1,1))
-####print("Heave mean amplitude: %s" % (np.mean(np.abs(np.abs(sixDoF[2][p_heave])-np.abs(m_heave)))))
-####plotgraph(sixDoF[0],sixDoF[2],m_heave,1,'Heave2','Time, s','Z_{g}, m')
-####
-####m_pitch = calc_mean(sixDoF[0],sixDoF[3],ref_point)
-####
-####p_pitch = signal.find_peaks_cwt(sixDoF[3][ref_point:-1]-m_pitch,np.arange(0.1,1))
-####print p_pitch
-####print("Pitch mean amplitude: %s" % (np.mean(np.abs(np.abs(sixDoF[3][p_pitch])-np.abs(m_pitch)))))
-####plotgraph(sixDoF[0],sixDoF[3],m_pitch,1,'Pitch','Time, s','Degree')
-####
