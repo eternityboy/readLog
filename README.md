@@ -3,6 +3,8 @@ add alias to your .bashrc
 ```bash
 alias readLog="python3 /path/to/readLog.py"
 ```
+## Version 1.5.1
+Bug fixes
 
 ## Version 1.5
 * support for both OF branches
